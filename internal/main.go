@@ -34,7 +34,7 @@ func Run(cmd *cobra.Command, args []string) {
 	}
 
 	// Create the proxy
-	p, err := proxy.NewProxy(viper.GetStringSlice("security.blacklist"))
+	p, err := proxy.NewProxy(viper.GetStringSlice("security.whitelist"), viper.GetStringSlice("security.blacklist"))
 	if err != nil {
 		logrus.WithError(err).Fatalln("Error while creating the proxy")
 	}
