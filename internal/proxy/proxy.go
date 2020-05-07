@@ -37,7 +37,7 @@ type Proxy struct {
 // NewProxy returns a new Proxy.
 func NewProxy(whitelist, blacklist []string) (*Proxy, error) {
 	// Cache
-	c, _ := local.NewLocalCache("configs", 1*time.Hour)
+	c, _ := local.NewLocalCache("configs\\cache\\", 1*time.Hour)
 
 	// Create the model
 	p := &Proxy{
