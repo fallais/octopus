@@ -1,19 +1,33 @@
 package proxy
 
-import "net"
+import (
+	"net"
+	"time"
+
+	"octopus/internal/cache"
+	"octopus/internal/cache/local"
+)
 
 //------------------------------------------------------------------------------
 // Structure
 //------------------------------------------------------------------------------
 
+// Cache is the cache configuration.
+type Cache struct {
+	IsEnabled bool
+	Type      string
+}
+
 // Proxy is the holder of the configuration.
 type Proxy struct {
-	AllowedPorts        []int       `json:"allowed_ports" mapstructure:"allowed_ports"`
-	AllowedNetworks     []net.IPNet `json:"allowed_networks" mapstructure:"allowed_networks"`
-	AllowedMethods      []string    `json:"allowed_methods" mapstructure:"allowed_methods"`
-	Whitelist           []string    `json:"whitelist" mapstructure:"whitelist"`
-	Blacklist           []string    `json:"blacklist" mapstructure:"blacklist"`
-	DisableForwardedFor bool        `json:"disable_forwarded_for" mapstructure:"disable_forwarded_for"`
+	AllowedPorts        []int
+	AllowedNetworks     []net.IPNet
+	AllowedMethods      []string
+	Whitelist           []string
+	Blacklist           []string
+	DisableForwardedFor bool
+	Cache               cache.Cache
+	IsCacheEnabled      bool
 }
 
 //------------------------------------------------------------------------------
@@ -22,9 +36,14 @@ type Proxy struct {
 
 // NewProxy returns a new Proxy.
 func NewProxy(whitelist, blacklist []string) (*Proxy, error) {
+	// Cache
+	c, _ := local.NewLocalCache("configs", 1*time.Hour)
+
 	// Create the model
 	p := &Proxy{
-		Blacklist: blacklist,
+		Blacklist:      blacklist,
+		IsCacheEnabled: true,
+		Cache:          c,
 	}
 
 	return p, nil

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strings"
 
-	"octopus/internal/headers"
+	"octopus/internal/proxy/headers"
 )
 
 func (p *Proxy) copyHeader(dst, src http.Header) {

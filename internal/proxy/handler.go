@@ -1,6 +1,10 @@
 package proxy
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"io"
 	"net/http"
 
 	"github.com/sirupsen/logrus"
@@ -26,6 +30,24 @@ func (p *Proxy) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 			return
 		}
+	}
+
+	// Check the cache
+	if p.IsCacheEnabled {
+		// Generate the hash of the ressource
+		hash := sha256.Sum256([]byte(r.URL.String()))
+
+		// Get the object from the cache
+		object, err := p.Cache.Get(hex.EncodeToString(hash[:]))
+		if err == nil {
+			w.WriteHeader(http.StatusResetContent)
+
+			io.Copy(w, bytes.NewReader(object))
+
+			return
+		}
+
+		logrus.Debugln("Object is not in cache")
 	}
 
 	if r.Method == http.MethodConnect {

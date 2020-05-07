@@ -10,7 +10,7 @@ import (
 
 func BenchmarkHTTPHandler(b *testing.B) {
 	// Create the proxy
-	p, err := proxy.NewProxy(nil)
+	p, err := proxy.NewProxy(nil, nil)
 	if err != nil {
 		b.Fatalf("Error while creating the proxy: %s", err)
 	}
