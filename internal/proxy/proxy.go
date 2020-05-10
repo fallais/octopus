@@ -1,33 +1,24 @@
 package proxy
 
 import (
-	"net"
+	"net/http"
+	"os"
 	"time"
 
 	"octopus/internal/cache"
-	"octopus/internal/cache/local"
+
+	"github.com/spf13/viper"
 )
 
 //------------------------------------------------------------------------------
 // Structure
 //------------------------------------------------------------------------------
 
-// Cache is the cache configuration.
-type Cache struct {
-	IsEnabled bool
-	Type      string
-}
-
 // Proxy is the holder of the configuration.
 type Proxy struct {
-	AllowedPorts        []int
-	AllowedNetworks     []net.IPNet
-	AllowedMethods      []string
-	Whitelist           []string
-	Blacklist           []string
-	DisableForwardedFor bool
-	Cache               cache.Cache
-	IsCacheEnabled      bool
+	opts         options
+	cacheManager *CacheManager
+	httpClient   *http.Client
 }
 
 //------------------------------------------------------------------------------
@@ -35,15 +26,36 @@ type Proxy struct {
 //------------------------------------------------------------------------------
 
 // NewProxy returns a new Proxy.
-func NewProxy(whitelist, blacklist []string) (*Proxy, error) {
-	// Cache
-	c, _ := local.NewLocalCache("configs\\cache\\", 1*time.Hour)
+func NewProxy(c cache.Cache, opts ...Option) (*Proxy, error) {
+	// Create the CacheManager
+	cm := &CacheManager{
+		IsEnabled: true,
+		Cache:     c,
+	}
 
-	// Create the model
+	// Create the HTTP client
+	httpClient := &http.Client{
+		Timeout:   time.Second * 5,
+		Transport: cm,
+	}
+
+	// Create the proxy
 	p := &Proxy{
-		Blacklist:      blacklist,
-		IsCacheEnabled: true,
-		Cache:          c,
+		cacheManager: cm,
+		httpClient:   httpClient,
+	}
+
+	// Set options
+	for _, opt := range opts {
+		opt(&p.opts)
+	}
+
+	// Set the hostname
+	hostname, err := os.Hostname()
+	if err != nil {
+		p.opts.visibleHostname = viper.GetString("general.visible_hostname")
+	} else {
+		p.opts.visibleHostname = hostname
 	}
 
 	return p, nil

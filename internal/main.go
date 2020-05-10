@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"time"
 
+	"octopus/internal/cache/local"
 	"octopus/internal/proxy"
 
 	"github.com/sirupsen/logrus"
@@ -33,8 +35,13 @@ func Run(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Fatalln("Error when reading configuration data")
 	}
 
+	c, err := local.NewLocalCache(viper.GetString("cache.settings.path"), 1*time.Hour)
+	if err != nil {
+		logrus.WithError(err).Fatalln("Error while creating the cache")
+	}
+
 	// Create the proxy
-	p, err := proxy.NewProxy(viper.GetStringSlice("security.whitelist"), viper.GetStringSlice("security.blacklist"))
+	p, err := proxy.NewProxy(c, proxy.WithWhitelist(viper.GetStringSlice("security.whitelist")), proxy.WithBlacklist(viper.GetStringSlice("security.blacklist")))
 	if err != nil {
 		logrus.WithError(err).Fatalln("Error while creating the proxy")
 	}

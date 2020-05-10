@@ -13,11 +13,15 @@ func (p *Proxy) HTTPHandler(w http.ResponseWriter, r *http.Request) {
 	p.removeHopByHopHeaders(r.Header)
 
 	// Append the XFF to the other XFF
-	p.updateXFFHeader(r.Header, r.Host)
+	p.updateXFFHeader(r.Header)
+
+	// Clean the RequestURI
+	r.RequestURI = ""
 
 	// Do the request
-	resp, err := http.DefaultTransport.RoundTrip(r)
+	resp, err := p.httpClient.Do(r)
 	if err != nil {
+		logrus.WithError(err).Errorln("error while doing the request")
 		http.Error(w, err.Error(), http.StatusServiceUnavailable)
 		return
 	}
@@ -26,13 +30,17 @@ func (p *Proxy) HTTPHandler(w http.ResponseWriter, r *http.Request) {
 	// Copy headers
 	p.copyHeader(w.Header(), resp.Header)
 
+	// Remove hop-by-hop headers
+	p.removeHopByHopHeaders(r.Header)
+
+	// Write the status code
 	w.WriteHeader(resp.StatusCode)
 
-	io.Copy(w, resp.Body)
-
-	// Generate the hash of the ressource
-	err = p.cache(r.URL, resp.Body)
+	// Write the response
+	_, err = io.Copy(w, resp.Body)
 	if err != nil {
-		logrus.WithError(err).Errorln("Error while writing in cache")
+		logrus.WithError(err).Errorln("error while copying the stream")
+		return
 	}
+
 }

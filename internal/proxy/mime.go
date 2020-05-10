@@ -1,5 +1,6 @@
 package proxy
 
+// Mimes ...
 var Mimes = []string{
 	"ico",
 	"png",

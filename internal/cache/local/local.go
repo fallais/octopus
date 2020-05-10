@@ -13,6 +13,7 @@ import (
 
 type localCache struct {
 	path              string
+	ticker            *time.Ticker
 	defaultExpiration time.Duration
 }
 
@@ -22,19 +23,34 @@ type localCache struct {
 
 // NewLocalCache returns a new local cache.
 func NewLocalCache(path string, defaultExpiration time.Duration) (cache.Cache, error) {
-	return &localCache{
+	lc := &localCache{
 		path:              path,
+		ticker:            time.NewTicker(1 * time.Second),
 		defaultExpiration: defaultExpiration,
-	}, nil
+	}
+
+	go lc.watch()
+
+	return lc, nil
 }
 
 //------------------------------------------------------------------------------
 // Functions
 //------------------------------------------------------------------------------
 
+func (c *localCache) watch() {
+	for range c.ticker.C {
+		go c.clean()
+	}
+}
+
+func (c *localCache) clean() {
+
+}
+
 // Set a value in cache.
-func (c *localCache) Set(key string, value interface{}, expires time.Duration) error {
-	return ioutil.WriteFile(c.path+"\\"+key, value.([]byte), 0644)
+func (c *localCache) Set(key string, value []byte) error {
+	return ioutil.WriteFile(c.path+"\\"+key, value, 0644)
 }
 
 // Get a value from cache.
