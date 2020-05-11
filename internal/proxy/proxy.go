@@ -29,8 +29,8 @@ type Proxy struct {
 func NewProxy(c cache.Cache, opts ...Option) (*Proxy, error) {
 	// Create the CacheManager
 	cm := &CacheManager{
-		IsEnabled: true,
-		Cache:     c,
+		isEnabled: true,
+		cache:     c,
 	}
 
 	// Create the HTTP client

@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"os"
 	"strings"
-
-	"octopus/internal/proxy/headers"
 )
 
 func (p *Proxy) copyHeader(dst, src http.Header) {
@@ -23,7 +21,7 @@ func (p *Proxy) copyHeader(dst, src http.Header) {
 }
 
 func (p *Proxy) removeHopByHopHeaders(header http.Header) {
-	for _, h := range headers.HopByHopHeaders {
+	for _, h := range HopByHopHeaders {
 		header.Del(h)
 	}
 }

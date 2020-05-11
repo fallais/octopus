@@ -9,6 +9,7 @@ import (
 	"octopus/internal/cache/local"
 	"octopus/internal/proxy"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -35,6 +36,7 @@ func Run(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Fatalln("Error when reading configuration data")
 	}
 
+	// Create the cache
 	c, err := local.NewLocalCache(viper.GetString("cache.settings.path"), 1*time.Hour)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Error while creating the cache")
@@ -46,9 +48,13 @@ func Run(cmd *cobra.Command, args []string) {
 		logrus.WithError(err).Fatalln("Error while creating the proxy")
 	}
 
+	// Handlers
+	http.Handle("/metrics", promhttp.Handler())
+	http.HandleFunc("/", p.Handler)
+
 	// Start
-	logrus.Infoln("Starting the proxy")
-	err = http.ListenAndServe(viper.GetString("general.bind"), p)
+	logrus.Infoln("Starting the HTTP server")
+	err = http.ListenAndServe(viper.GetString("general.bind"), http.DefaultServeMux)
 	if err != nil {
 		logrus.WithError(err).Fatalln("Error while starting the server")
 	}

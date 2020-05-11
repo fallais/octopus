@@ -20,8 +20,8 @@ import (
 
 // CacheManager is the cache manager.
 type CacheManager struct {
-	IsEnabled bool
-	Cache     cache.Cache
+	isEnabled bool
+	cache     cache.Cache
 }
 
 //------------------------------------------------------------------------------
@@ -31,8 +31,8 @@ type CacheManager struct {
 // RoundTrip is the implementation of the RoundTripper interface.
 func (c *CacheManager) RoundTrip(r *http.Request) (*http.Response, error) {
 	// Try to get the ressource from the cache if it is enabled
-	if c.IsEnabled {
-		cachedRessource, err := c.Cache.Get(generateCacheKey(r))
+	if c.isEnabled {
+		cachedRessource, err := c.cache.Get(generateCacheKey(r))
 		if err == nil {
 			logrus.Debugln("ressource is in cache")
 
@@ -62,9 +62,9 @@ func (c *CacheManager) RoundTrip(r *http.Request) (*http.Response, error) {
 	}
 
 	// Set the ressource in cache if it is enabled
-	if c.IsEnabled {
+	if c.isEnabled {
 		go func() {
-			err = c.Cache.Set(generateCacheKey(r), []byte(string(body)))
+			err = c.cache.Set(generateCacheKey(r), body)
 			if err != nil {
 				logrus.WithError(err).Errorln("error while adding ressource to cache")
 				return
